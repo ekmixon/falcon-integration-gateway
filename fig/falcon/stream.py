@@ -116,12 +116,19 @@ class StreamingConnection():
 
     def open(self):
         headers = {
-            'Authorization': 'Token %s' % (self.stream.token),
-            'Date': datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S +0000'),
-            'Connection': 'Keep-Alive'
+            'Authorization': f'Token {self.stream.token}',
+            'Date': datetime.datetime.utcnow().strftime(
+                '%a, %d %b %Y %H:%M:%S +0000'
+            ),
+            'Connection': 'Keep-Alive',
         }
+
         log.info("Opening Streaming Connection")
-        url = self.stream.url + '&offset={}'.format(self.last_seen_offset + 1 if self.last_seen_offset != 0 else 0)
+        url = (
+            self.stream.url
+            + f'&offset={self.last_seen_offset + 1 if self.last_seen_offset != 0 else 0}'
+        )
+
         self.connection = requests.get(url, headers=headers, stream=True)
         return self.connection
 

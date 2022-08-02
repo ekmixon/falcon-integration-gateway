@@ -9,13 +9,12 @@ from ...config import config
 
 
 def build_signature(workspace_id, primary_key, date, content_length, method, content_type, resource):
-    x_headers = 'x-ms-date:' + date
+    x_headers = f'x-ms-date:{date}'
     string_to_hash = method + "\n" + str(content_length) + "\n" + content_type + "\n" + x_headers + "\n" + resource
     bytes_to_hash = bytes(string_to_hash, encoding="utf-8")
     decoded_key = b64decode(primary_key)
     encoded_hash = b64encode(new(decoded_key, bytes_to_hash, digestmod=sha256).digest()).decode()
-    authorization = "SharedKey {}:{}".format(workspace_id, encoded_hash)
-    return authorization
+    return f"SharedKey {workspace_id}:{encoded_hash}"
 
 
 def post_data(workspace_id, primary_key, body, log_type):
@@ -32,7 +31,8 @@ def post_data(workspace_id, primary_key, body, log_type):
         method,
         content_type,
         resource)
-    uri = 'https://' + workspace_id + '.ods.opinsights.azure.com' + resource + '?api-version=2016-04-01'
+    uri = f'https://{workspace_id}.ods.opinsights.azure.com{resource}?api-version=2016-04-01'
+
     headers = {
         'content-type': content_type,
         'Authorization': signature,
@@ -55,20 +55,23 @@ class Submitter():
         post_data(self.workspace_id, self.primary_key, self.log(), 'FalconIntegrationGatewayLogs')
 
     def log(self):
-        json_data = [{
-            'ExternalUri': self.event.falcon_link,
-            'FalconEventId': self.event.event_id,
-            'ComputerName': self.event.original_event['event']['ComputerName'],
-            'Description': self.event.detect_description,
-            'Severity': self.event.severity,
-            'Title': 'Falcon Alert. Instance {}'.format(self.event.instance_id),
-            'ProcessName': self.event.original_event['event']['FileName'],
-            'ProcessPath': self.event.original_event['event']['FilePath'],
-            'CommandLine': self.event.original_event['event']['CommandLine'],
-            'DetectName': self.event.detect_name,
-            'AccountId': self.event.cloud_provider_account_id,
-            'InstanceId': self.event.instance_id
-        }]
+        json_data = [
+            {
+                'ExternalUri': self.event.falcon_link,
+                'FalconEventId': self.event.event_id,
+                'ComputerName': self.event.original_event['event']['ComputerName'],
+                'Description': self.event.detect_description,
+                'Severity': self.event.severity,
+                'Title': f'Falcon Alert. Instance {self.event.instance_id}',
+                'ProcessName': self.event.original_event['event']['FileName'],
+                'ProcessPath': self.event.original_event['event']['FilePath'],
+                'CommandLine': self.event.original_event['event']['CommandLine'],
+                'DetectName': self.event.detect_name,
+                'AccountId': self.event.cloud_provider_account_id,
+                'InstanceId': self.event.instance_id,
+            }
+        ]
+
         return dumps(json_data)
 
 

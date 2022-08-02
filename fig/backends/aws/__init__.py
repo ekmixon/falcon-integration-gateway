@@ -25,7 +25,9 @@ class Submitter():
             "service_provider_account_id": self.event.cloud_provider_account_id,
             "local_ip": self.event.device_details["local_ip"],
             "mac_address": self.event.device_details["mac_address"],
-            "detected_mac_address": self.event.original_event["event"]["MACAddress"],
+            "detected_mac_address": self.event.original_event["event"][
+                "MACAddress"
+            ],
             "detected_local_ip": self.event.original_event["event"]["LocalIP"],
             "detection_id": self.event.event_id,
             "tactic": self.event.original_event["event"]["Tactic"],
@@ -35,9 +37,11 @@ class Submitter():
             "generator_id": "Falcon Host",
             "types": ["Namespace: Threat Detections"],
             "created_at": self.event.time,
-            "updated_at": ((datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))).isoformat() + 'Z'),
+            "updated_at": f'{(datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))).isoformat()}Z',
             "record_state": "ACTIVE",
-            "severity": self.event.severity}
+            "severity": self.event.severity,
+        }
+
         try:
             payload["Process"] = {}
             payload["Process"]["Name"] = self.event.original_event["event"]["FileName"]
@@ -53,15 +57,29 @@ class Submitter():
         return payload
 
     def network_payload(self):
-        net = {}
-        net['Direction'] = \
-            "IN" if self.event.original_event['event']['NetworkAccesses'][0]['ConnectionDirection'] == 0 else 'OUT'
-        net['Protocol'] = self.event.original_event['event']['NetworkAccesses'][0]['Protocol']
-        net['SourceIpV4'] = self.event.original_event['event']['NetworkAccesses'][0]['LocalAddress']
-        net['SourcePort'] = self.event.original_event['event']['NetworkAccesses'][0]['LocalPort']
-        net['DestinationIpV4'] = self.event.original_event['event']['NetworkAccesses'][0]['RemoteAddress']
-        net['DestinationPort'] = self.event.original_event['event']['NetworkAccesses'][0]['RemotePort']
-        return net
+        return {
+            'Direction': "IN"
+            if self.event.original_event['event']['NetworkAccesses'][0][
+                'ConnectionDirection'
+            ]
+            == 0
+            else 'OUT',
+            'Protocol': self.event.original_event['event']['NetworkAccesses'][0][
+                'Protocol'
+            ],
+            'SourceIpV4': self.event.original_event['event']['NetworkAccesses'][0][
+                'LocalAddress'
+            ],
+            'SourcePort': self.event.original_event['event']['NetworkAccesses'][0][
+                'LocalPort'
+            ],
+            'DestinationIpV4': self.event.original_event['event'][
+                'NetworkAccesses'
+            ][0]['RemoteAddress'],
+            'DestinationPort': self.event.original_event['event'][
+                'NetworkAccesses'
+            ][0]['RemotePort'],
+        }
 
 
 class Runtime():

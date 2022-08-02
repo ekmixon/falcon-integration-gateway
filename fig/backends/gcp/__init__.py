@@ -29,10 +29,15 @@ class Cache():
             if len(assets) == 1:
                 self._assets[asset_id] = assets[0].asset
             elif len(assets) == 0:
-                raise AssetNotFound("Asset {} not found in GCP Project {}".format(asset_id, project_number))
+                raise AssetNotFound(
+                    f"Asset {asset_id} not found in GCP Project {project_number}"
+                )
+
             else:
                 raise APIDataError(
-                    "Multiple assets found with ID={} within GCP Project {}".format(asset_id, project_number))
+                    f"Multiple assets found with ID={asset_id} within GCP Project {project_number}"
+                )
+
         return self._assets[asset_id]
 
     def source(self, org_id):
@@ -43,7 +48,10 @@ class Cache():
     def organization_parent_of(self, project_id):
         project = self.projects[project_id]
         if 'type' not in project.parent or project.parent['type'] != 'organization':
-            raise APIDataError('Could not determine parent organization for gcp project {}'.format(project_id))
+            raise APIDataError(
+                f'Could not determine parent organization for gcp project {project_id}'
+            )
+
         return project.parent['id']
 
     def project_number_accesible(self, project_number: int) -> bool:
@@ -115,14 +123,16 @@ class Submitter():
                 'ComputerName': self.event.original_event['event']['ComputerName'],
                 'Description': self.event.detect_description,
                 'Severity': self.severity,
-                'Title': 'Falcon Alert. Instance {}'.format(self.event.instance_id),
+                'Title': f'Falcon Alert. Instance {self.event.instance_id}',
                 'Category': self.event_category,
                 'ProcessInformation': {
                     'ProcessName': self.event.original_event['event']['FileName'],
                     'ProcessPath': self.event.original_event['event']['FilePath'],
-                    'CommandLine': self.event.original_event['event']['CommandLine']
+                    'CommandLine': self.event.original_event['event'][
+                        'CommandLine'
+                    ],
                 },
-            }
+            },
         )
         # ART Uncomment these fields to force behavior parity with the prior art. Don't.
         # ART finding.severity=self.original_event['event']['Severity']
@@ -163,7 +173,10 @@ class Submitter():
     @lru_cache
     def finding_id(self):
         event_id = re.sub('[^0-9a-zA-Z]+', '', self.event.event_id)
-        creation_time = str(hex(int(self.event.original_event['metadata']['eventCreationTime'])))[-6:]
+        creation_time = hex(
+            int(self.event.original_event['metadata']['eventCreationTime'])
+        )[-6:]
+
         return (event_id + creation_time)[-32:]
 
     @property

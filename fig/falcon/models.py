@@ -56,6 +56,6 @@ class Stream(dict):
     def partition(self):
         match = re.match(r'.*\/sensors\/entities\/datafeed-actions/v1/([0-9a-zA-Z]+)\?',
                          self['refreshActiveSessionURL'])
-        if not match or not match.group(1):
-            raise Exception('Cannot parse stream partition from stream data: {}'.format(self))
-        return match.group(1)
+        if not match or not match[1]:
+            raise Exception(f'Cannot parse stream partition from stream data: {self}')
+        return match[1]

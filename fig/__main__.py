@@ -18,8 +18,10 @@ if __name__ == "__main__":
     StreamManagementThread(output_queue=falcon_events).start()
 
     for i in range(int(config.get('main', 'worker_threads'))):
-        WorkerThread(name='worker-' + str(i),
-                     input_queue=falcon_events,
-                     falcon_cache=falcon_cache,
-                     backends=backends,
-                     daemon=True).start()
+        WorkerThread(
+            name=f'worker-{str(i)}',
+            input_queue=falcon_events,
+            falcon_cache=falcon_cache,
+            backends=backends,
+            daemon=True,
+        ).start()

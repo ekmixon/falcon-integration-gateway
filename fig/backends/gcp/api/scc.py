@@ -16,10 +16,13 @@ class SecurityCommandCenter():
         self.client = securitycenter.SecurityCenterClient()
 
     def get_asset(self, project_number, asset_id):
-        asset_iterator = self.client.list_assets(request={
-            "parent": self.client.common_project_path(project_number),
-            'filter': 'resource_properties.id="{}"'.format(asset_id)
-        })
+        asset_iterator = self.client.list_assets(
+            request={
+                "parent": self.client.common_project_path(project_number),
+                'filter': f'resource_properties.id="{asset_id}"',
+            }
+        )
+
         return list(asset_iterator)
 
     def list_instances(self, project_number):
@@ -30,10 +33,16 @@ class SecurityCommandCenter():
         return list(asset_iterator)
 
     def get_fig_source(self, org_id):
-        for _, source in enumerate(self.client.list_sources(request={"parent": self._org_name(org_id)})):
-            if source.display_name == self.FIG_SOURCE_NAME:
-                return source
-        return None
+        return next(
+            (
+                source
+                for source in self.client.list_sources(
+                    request={"parent": self._org_name(org_id)}
+                )
+                if source.display_name == self.FIG_SOURCE_NAME
+            ),
+            None,
+        )
 
     def get_or_create_fig_source(self, org_id):
         source = self.get_fig_source(org_id)
@@ -42,9 +51,7 @@ class SecurityCommandCenter():
 
         with _sources_lock:
             source = self.get_fig_source(org_id)
-            if source is not None:
-                return source
-            return self.create_fig_source(org_id)
+            return source if source is not None else self.create_fig_source(org_id)
 
     def create_fig_source(self, org_id):
         log.info("Creating new Finding Source in GCP Security Command Center (org_id=%s)", org_id)
@@ -73,34 +80,32 @@ class SecurityCommandCenter():
 
     def get_finding(self, finding: Finding, source: Source):
         _ = finding
-        return list(self.client.list_findings(
-            request={
-                'parent': source.name,
-                'filter': 'name="{}"'.format(finding.name),
-            }))
+        return list(
+            self.client.list_findings(
+                request={'parent': source.name, 'filter': f'name="{_.name}"'}
+            )
+        )
 
     def create_finding(self, finding_id, finding: Finding, source: Source):
         log.info('Submitting new finding to GCP Security Command Center (finding_id=%s)', finding_id)
-        created_finding = self.client.create_finding(
+        return self.client.create_finding(
             request=CreateFindingRequest(
                 parent=source.name,
                 finding_id=finding_id,
                 finding=finding,
             )
         )
-        return created_finding
 
     def update_finding(self, finding):
         field_mask = FieldMask(
             paths=['event_time']
         )
-        updated_finding = self.client.update_finding(
+        return self.client.update_finding(
             request={
                 "finding": finding,
                 "update_mask": field_mask,
             }
         )
-        return updated_finding
 
     @classmethod
     def _org_name(cls, org_id):

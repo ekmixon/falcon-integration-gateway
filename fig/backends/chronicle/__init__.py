@@ -10,14 +10,12 @@ def parse_url(url):
     try:
         cid = url.split("_")[-1]
         segments = url.split("/")
-        relevant_url = ""
-        for i in range(3, len(segments)):
-            relevant_url += "/" + segments[i]
+        relevant_url = "".join(f"/{segments[i]}" for i in range(3, len(segments)))
         parsed_relevant_url = quote(relevant_url, safe='')
-        final_url = segments[0] + "/"
-        final_url += segments[1] + "/"
-        final_url += segments[2] + "/api2/link?"
-        final_url += cid + "&url=" + parsed_relevant_url
+        final_url = f"{segments[0]}/"
+        final_url += f"{segments[1]}/"
+        final_url += f"{segments[2]}/api2/link?"
+        final_url += f"{cid}&url={parsed_relevant_url}"
         return final_url.split("_")[0]
     except IndexError as error:
         log.error("Failed to parse FalconHostLink: %s", error)
@@ -39,21 +37,19 @@ class Submitter():
         meta = self.event.original_event['metadata']
         timestamp_components = str(datetime.fromtimestamp(event["ProcessStartTime"])).split()
         new_url = parse_url(event["FalconHostLink"])
-        udm_result = {
+        return {
             "metadata": {
-                "event_timestamp": timestamp_components[0] + "T" + timestamp_components[1] + "+00:00",
+                "event_timestamp": f"{timestamp_components[0]}T{timestamp_components[1]}+00:00",
                 "event_type": "PROCESS_UNCATEGORIZED",
                 "description": event["DetectDescription"],
                 "product_event_type": meta["eventType"],
                 "product_log_id": event["DetectId"],
-                "product_name": "Falcon"
+                "product_name": "Falcon",
             },
             "principal": {
                 "hostname": event["ComputerName"],
-                "user": {
-                    "userid": event["UserName"]
-                },
-                "ip": event["LocalIP"]
+                "user": {"userid": event["UserName"]},
+                "ip": event["LocalIP"],
             },
             "target": {
                 "asset_id": "CrowdStrike.Falcon:" + event["SensorId"],
@@ -63,22 +59,21 @@ class Submitter():
                         "full_path": event["FilePath"] + "\\" + event["FileName"],
                         "md5": event["MD5String"],
                         "sha1": event["SHA1String"],
-                        "sha256": event["SHA256String"]
+                        "sha256": event["SHA256String"],
                     },
                     "pid": str(event["ProcessId"]),
                     "parent_process": {
                         "command_line": event["ParentCommandLine"],
-                        "pid": str(event["ParentProcessId"])
-                    }
-                }
+                        "pid": str(event["ParentProcessId"]),
+                    },
+                },
             },
             "security_result": {
                 "action_details": event["PatternDispositionDescription"],
                 "severity_details": event["SeverityName"],
-                "url_back_to_product": new_url
-            }
+                "url_back_to_product": new_url,
+            },
         }
-        return udm_result
 
     def post_to_chronicle(self, event):
         # Only Chronicle's US region doesn't have an API prefix
@@ -86,7 +81,8 @@ class Submitter():
         if self.region == 'us':
             prefix = ''
 
-        url = "https://" + prefix + "malachiteingestion-pa.googleapis.com/v1/udmevents?key=" + self.security_key
+        url = f"https://{prefix}malachiteingestion-pa.googleapis.com/v1/udmevents?key={self.security_key}"
+
         headers = {'Content-Type': 'application/json'}
         payload = {"events": [event]}
 

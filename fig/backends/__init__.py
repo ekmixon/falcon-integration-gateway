@@ -20,7 +20,7 @@ class Backends():
         self.runtimes = [v.Runtime()
                          for k, v in ALL_BACKENDS.items()
                          if k in config.backends]
-        if len(self.runtimes) == 0:
+        if not self.runtimes:
             raise Exception("No Backend enabled. Exiting.")
 
     def process(self, falcon_event):

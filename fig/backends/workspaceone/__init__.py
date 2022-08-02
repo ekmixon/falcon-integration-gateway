@@ -16,8 +16,8 @@ class Submitter():
         event = self.event.original_event['event']
         meta = self.event.original_event['metadata']
         msg = 'CEF:0|CrowdStrike|FalconHost|1.0|DetectionSummaryEvent|Detection Summary Event|2|'
-        msg += 'Token=' + self.workspaceone_token
-        msg += ' UDID=' + self.event.mdm_identifier
+        msg += f'Token={self.workspaceone_token}'
+        msg += f' UDID={self.event.mdm_identifier}'
         if 'SensorId' in event:
             msg += ' externalId=' + event['SensorId']
         if 'ProcessId' in event:

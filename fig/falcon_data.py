@@ -27,9 +27,14 @@ class FalconCache():
             resources = self.falcon_api.device_details(sensor_id)
             if len(resources) > 1:
                 raise FalconAPIDataError(
-                    'Cannot process event for device: {}, multiple devices exists'.format(sensor_id))
+                    f'Cannot process event for device: {sensor_id}, multiple devices exists'
+                )
+
             if len(resources) == 0:
-                raise FalconAPIDataError('Cannot process event for device {}, device not known'.format(sensor_id))
+                raise FalconAPIDataError(
+                    f'Cannot process event for device {sensor_id}, device not known'
+                )
+
             detail = self.falcon_api.device_details(sensor_id)[0]
             self._host_detail[sensor_id] = detail
 
